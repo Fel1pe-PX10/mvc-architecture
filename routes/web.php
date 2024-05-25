@@ -2,12 +2,9 @@
 
 use Lib\Route;
 
-Route::get('/', function(){
-    return [
-        "test" => 'otro',
-        "como" => 'este'
-    ];
-});
+use App\Controllers\HomeController;
+
+Route::get('/', [HomeController::class, 'index']);
 
 Route::get('/contact', function(){
     return "hello contact";
