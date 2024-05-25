@@ -3,15 +3,22 @@
 use Lib\Route;
 
 Route::get('/', function(){
-    echo "hello world";
+    return [
+        "test" => 'otro',
+        "como" => 'este'
+    ];
 });
 
 Route::get('/contact', function(){
-    echo "hello contact";
+    return "hello contact";
 });
 
 Route::get('/about', function(){
-    echo "hello about";
+    return "hello about";
+});
+
+Route::get('/courses/:slug', function($slug){
+    return "hello courses ".$slug;
 });
 
 Route::dispatch();
