@@ -28,8 +28,22 @@ class Model {
             die('Connection error: ' . $this->conn->connect_errno);
     }
 
-    public function query($sql){
-        $this->query = $this->conn->query($sql);
+    public function query($sql, $data = [], $params = null){
+
+        if($data){
+
+            if($params == null){
+                $params = str_repeat('s', count($data));    
+            }
+
+            $smtp = $this->conn->prepare($sql);
+            $smtp->bind_param($params, ...$data);
+            $smtp->execute();
+
+            $this->query = $smtp->get_result();
+        }
+        else
+            $this->query = $this->conn->query($sql);
         return $this;
     }
 
@@ -46,7 +60,8 @@ class Model {
     }
 
     public function find($id){
-        return $this->query("SELECT * FROM {$this->table} WHERE id = {$id}")->first();
+        $sql = "SELECT * FROM {$this->table} WHERE id = ?";
+        return $this->query($sql, [$id], 'i')->first();
     }
 
     public function where($column, $operator, $value = null){
@@ -56,7 +71,9 @@ class Model {
             $operator = "=";
         }
 
-        $this->query("SELECT * FROM {$this->table} WHERE {$column} {$operator} {$value}");
+        $sql = "SELECT * FROM {$this->table} WHERE {$column} {$operator} ?";
+
+        $this->query($sql, [$value], 's');
 
         return $this;
     }
@@ -66,9 +83,9 @@ class Model {
         $columns = implode(",", $columns);
 
         $values = array_values($data);
-        $values = "'" . implode("', '", $values) . "'";
 
-        $this->query("INSERT INTO {$this->table} ({$columns}) VALUES ({$values})");
+        $sql = "INSERT INTO {$this->table} ({$columns}) VALUES (". str_repeat('?, ', count($data)-1) ." ?)";
+        $this->query($sql, $values);
 
         $id = $this->conn->insert_id;
 
@@ -79,16 +96,22 @@ class Model {
 
         $fields = array();
         foreach($data as $column => $value)
-            $fields[] = $column . " = '" . $value ."'"; 
+            $fields[] = $column . " = ?"; 
 
         $fields = implode(", ", $fields);
 
-        $this->query("UPDATE {$this->table} SET {$fields} WHERE id = {$id}");
+        $sql = "UPDATE {$this->table} SET {$fields} WHERE id = ?";
+
+        $values = array_values($data);
+        $values[] = $id; 
+
+        $this->query($sql, $values);
 
         return $this->find($id);
     }
 
     public function delete($id){
-        $this->query("DELETE FROM {$this->table} WHERE id = {$id}");
+        $sql = "DELETE FROM {$this->table} WHERE id = ?";
+        $this->query($sql, [$id], 'i');
     }
 }
