@@ -9,7 +9,7 @@ class HomeController extends Controller {
     public function index(){
 
         $Contacto = new Contact;
-        return $Contacto->query("SELECT * FROM contacts")->get();
+        return $Contacto->delete(5);
 
         return $this->view('home', [
             'title' => 'Home Title',
