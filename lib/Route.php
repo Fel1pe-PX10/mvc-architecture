@@ -24,7 +24,7 @@ class Route {
         foreach(self::$routes[$method] as $route => $callback){
             
             if(strpos($route, ":") !== false){
-                $route = preg_replace("#:[a-zA-Z]+#", '([a-zA-Z]+)', $route);
+                $route = preg_replace("#:[a-zA-Z]+#", '([a-zA-Z0-9]+)', $route);
             }
 
             if(preg_match("#^$route$#", $uri, $matches)){
