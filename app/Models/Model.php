@@ -55,6 +55,11 @@ class Model {
         return $this->query->fetch_all(MYSQLI_ASSOC);
     }
 
+    public function paginate($cant = 15){
+        $sql = "SELECT * FROM {$this->table} LIMIT {$cant}";
+        $this->query($sql);
+    }
+
     public function all(){
         return $this->query("SELECT * FROM {$this->table}")->get();
     }
