@@ -13,26 +13,44 @@ class ContactController extends Controller {
     }
 
     public function create(){
-        
+        return $this->view('contacts.create');
     }
 
     public function store(){
+        $post = $_POST;
+        $Contact = new Contact;
+        $Contact->create($post);
+
+        return $this->redirect('/contacts');
+    }
+
+    public function show($id){
+        $Contact = new Contact;
+        $contact = $Contact->find($id);
+
+        return $this->view('contacts.show', compact('contact'));
+    }
+
+    public function edit($id){
+        
+        $Contact = new Contact;
+        $contact = $Contact->find($id);
+
+        return $this->view('contacts.edit', compact('contact'));
+    }
+
+    public function update($id){
+        $post = $_POST;
+        $Contact = new Contact;
+        $Contact->update($id, $post);
+
+        return $this->redirect('/contacts/'.$id);
         
     }
 
-    public function show(){
-        
-    }
-
-    public function edit(){
-        
-    }
-
-    public function update(){
-        
-    }
-
-    public function destroy(){
-        
+    public function destroy($id){
+        $Contact = new Contact;
+        $Contact->delete($id);
+        return $this->redirect('/contacts');
     }
 }

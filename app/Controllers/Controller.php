@@ -19,4 +19,8 @@ class Controller {
 
         return $content;
     }
+
+    protected function redirect($route){
+        header("Location: {$route}");
+    }
 }
