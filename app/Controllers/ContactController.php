@@ -7,8 +7,9 @@ use App\Models\Contact;
 class ContactController extends Controller {
 
     public function index(){
+        
         $Contact = new Contact;
-        return $Contact->paginate(3);
+        return $Contact->paginate(2);
         $contacts = $Contact->all();
         return $this->view('contacts.index', compact('contacts'));
     }

@@ -56,8 +56,27 @@ class Model {
     }
 
     public function paginate($cant = 15){
-        $sql = "SELECT * FROM {$this->table} LIMIT {$cant}";
-        $this->query($sql);
+        $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} LIMIT " . ($page - 1)*$cant . ", {$cant}";
+
+        $data = $this->query($sql)->get();
+        $total = $this->query("SELECT FOUND_ROWS() as total")->first()['total'];
+
+        $uri = $_SERVER['REQUEST_URI'];
+        $uri = trim($uri, '/');
+        if(strpos($uri, '?') !== false)
+        $uri = substr($uri, 0, strpos($uri, '?'));
+
+
+        return [
+            'total' => $total,
+            'from' => ($page - 1)*$cant + 1,
+            'to' => ($page - 1)*$cant + count($data),
+            'next_page' => ($page < ceil($total / $cant)) ? "/" . $uri . "?page=" . ($page + 1) : null,
+            'prev_page' => ($page > 1) ? "/" . $uri . "?page=" . ($page - 1) : null,
+            'data' => $data,
+            
+        ];   
     }
 
     public function all(){
