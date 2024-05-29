@@ -9,7 +9,11 @@ class ContactController extends Controller {
     public function index(){
         
         $Contact = new Contact;
-        $contacts = $Contact->paginate(2);
+
+        if(isset($_GET['search']))
+            $contacts = $Contact->where('name', 'LIKE', '%' . $_GET['search'] . '%')->paginate(2);
+        else
+            $contacts = $Contact->paginate(2);
         
         return $this->view('contacts.index', compact('contacts'));
     }

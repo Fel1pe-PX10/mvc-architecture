@@ -13,8 +13,11 @@ class Model {
 
     protected $conn;
     protected $query;
-
     protected $table;
+
+    protected $sql;
+    protected $data = [];
+    protected $params = null;
 
     public function __construct()
     {
@@ -44,14 +47,21 @@ class Model {
         }
         else
             $this->query = $this->conn->query($sql);
+
         return $this;
     }
 
     public function first(){
+        if(empty($this->query))
+            $this->query($this->sql, $this->data, $this->params);
+
         return $this->query->fetch_assoc();
     }
 
     public function get(){
+        if(empty($this->query))
+            $this->query($this->sql, $this->data, $this->params);
+
         return $this->query->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -59,7 +69,15 @@ class Model {
         $page = isset($_GET['page']) ? $_GET['page'] : 1;
         $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} LIMIT " . ($page - 1)*$cant . ", {$cant}";
 
-        $data = $this->query($sql)->get();
+        if($this->sql){
+            $sql = $this->sql . " LIMIT " . ($page - 1) * $cant . ", {$cant}";
+            $data = $this->query($sql, $this->data, $this->params)->get();
+        }
+        else{
+            $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} LIMIT " . ($page - 1)*$cant . ", {$cant}";
+            $data = $this->query($sql)->get();
+        }
+
         $total = $this->query("SELECT FOUND_ROWS() as total")->first()['total'];
 
         $uri = $_SERVER['REQUEST_URI'];
@@ -97,9 +115,8 @@ class Model {
             $operator = "=";
         }
 
-        $sql = "SELECT * FROM {$this->table} WHERE {$column} {$operator} ?";
-
-        $this->query($sql, [$value], 's');
+        $this->sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} WHERE {$column} {$operator} ?";
+        $this->data[] = $value;
 
         return $this;
     }
