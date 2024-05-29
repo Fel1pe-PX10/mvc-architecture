@@ -9,8 +9,8 @@ class ContactController extends Controller {
     public function index(){
         
         $Contact = new Contact;
-        return $Contact->paginate(2);
-        $contacts = $Contact->all();
+        $contacts = $Contact->paginate(2);
+        
         return $this->view('contacts.index', compact('contacts'));
     }
 

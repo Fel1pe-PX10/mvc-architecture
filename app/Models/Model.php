@@ -72,8 +72,10 @@ class Model {
             'total' => $total,
             'from' => ($page - 1)*$cant + 1,
             'to' => ($page - 1)*$cant + count($data),
-            'next_page' => ($page < ceil($total / $cant)) ? "/" . $uri . "?page=" . ($page + 1) : null,
-            'prev_page' => ($page > 1) ? "/" . $uri . "?page=" . ($page - 1) : null,
+            'currentPage' => $page,
+            'lastPage' => ceil($total / $cant),
+            'nextPage' => ($page < ceil($total / $cant)) ? "/" . $uri . "?page=" . ($page + 1) : null,
+            'prevPage' => ($page > 1) ? "/" . $uri . "?page=" . ($page - 1) : null,
             'data' => $data,
             
         ];   
