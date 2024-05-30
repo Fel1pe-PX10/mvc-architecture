@@ -19,6 +19,8 @@ class Model {
     protected $data = [];
     protected $params = null;
 
+    protected $orderByColumn = null;
+
     public function __construct()
     {
         $this->connection();
@@ -52,15 +54,27 @@ class Model {
     }
 
     public function first(){
-        if(empty($this->query))
+        if(empty($this->query)){
+            
+            if(empty($this->sql))
+                $this->sql = "SELECT * FROM {$this->table}";
+
+            $this->sql .= $this->orderByColumn;
             $this->query($this->sql, $this->data, $this->params);
+        }
 
         return $this->query->fetch_assoc();
     }
 
     public function get(){
-        if(empty($this->query))
+        if(empty($this->query)){
+            
+            if(empty($this->sql))
+                $this->sql = "SELECT * FROM {$this->table}";
+
+            $this->sql .= $this->orderByColumn;
             $this->query($this->sql, $this->data, $this->params);
+        }
 
         return $this->query->fetch_all(MYSQLI_ASSOC);
     }
@@ -70,11 +84,11 @@ class Model {
         $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} LIMIT " . ($page - 1)*$cant . ", {$cant}";
 
         if($this->sql){
-            $sql = $this->sql . " LIMIT " . ($page - 1) * $cant . ", {$cant}";
+            $sql = $this->sql . ($this->orderByColumn) . " LIMIT " . ($page - 1) * $cant . ", {$cant}";
             $data = $this->query($sql, $this->data, $this->params)->get();
         }
         else{
-            $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} LIMIT " . ($page - 1)*$cant . ", {$cant}";
+            $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} " . ($this->orderByColumn) . " LIMIT " . ($page - 1)*$cant . ", {$cant}";
             $data = $this->query($sql)->get();
         }
 
@@ -162,5 +176,14 @@ class Model {
     public function delete($id){
         $sql = "DELETE FROM {$this->table} WHERE id = ?";
         $this->query($sql, [$id], 'i');
+    }
+
+    public function orderBy($column, $order = 'ASC'){
+        if(empty($this->orderByColumn))
+        	$this->orderByColumn = " ORDER BY {$column} {$order}";
+        else
+            $this->orderByColumn .= ", {$column} {$order}";
+
+        return $this;
     }
 }
