@@ -15,10 +15,9 @@ class Model {
     protected $query;
     protected $table;
 
-    protected $sql;
-    protected $data = [];
-    protected $params = null;
-
+    protected $select = "*";
+    protected $where = null;
+    protected $values = [];
     protected $orderByColumn = null;
 
     public function __construct()
@@ -53,44 +52,94 @@ class Model {
         return $this;
     }
 
-    public function first(){
-        if(empty($this->query)){
-            
-            if(empty($this->sql))
-                $this->sql = "SELECT * FROM {$this->table}";
+    public function select(...$columns){
+        $this->select = implode(", ", $columns);
 
-            $this->sql .= $this->orderByColumn;
-            $this->query($this->sql, $this->data, $this->params);
+        return $this;
+    }
+
+    public function where($column, $operator, $value = null){
+
+        if($value == null){
+            $value = $operator;
+            $operator = "=";
         }
 
-        return $this->query->fetch_assoc();
+        if($this->where)
+            $this->where .= " AND {$column} {$operator} ?";
+        else
+            $this->where = " {$column} {$operator} ?";
+        
+        $this->values[] = $value;
+        
+        return $this;
+    }
+
+    public function orderBy($column, $order = 'ASC'){
+        if($this->orderByColumn)
+        	$this->orderByColumn = ", {$column} {$order}";
+        else
+            $this->orderByColumn .= "{$column} {$order}";
+
+        return $this;
     }
 
     public function get(){
         if(empty($this->query)){
             
-            if(empty($this->sql))
-                $this->sql = "SELECT * FROM {$this->table}";
+           $sql = "SELECT {$this->select} FROM {$this->table}";
 
-            $this->sql .= $this->orderByColumn;
-            $this->query($this->sql, $this->data, $this->params);
+            if($this->where)
+                $sql .= " WHERE {$this->where}";
+
+            if($this->orderByColumn)
+                $sql .= " ORDER BY {$this->orderByColumn}";
+
+            $this->query($sql, $this->values);
         }
 
         return $this->query->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function paginate($cant = 15){
-        $page = isset($_GET['page']) ? $_GET['page'] : 1;
-        $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} LIMIT " . ($page - 1)*$cant . ", {$cant}";
+    public function first(){
+        if(empty($this->query)){
+            
+            $sql = "SELECT {$this->select} FROM {$this->table}";
+ 
+             if($this->where)
+                 $sql .= " WHERE {$this->where}";
+ 
+             if($this->orderByColumn)
+                 $sql .= " ORDER BY {$this->orderByColumn}";
+ 
+             $this->query($sql, $this->values);
+         }
 
-        if($this->sql){
-            $sql = $this->sql . ($this->orderByColumn) . " LIMIT " . ($page - 1) * $cant . ", {$cant}";
-            $data = $this->query($sql, $this->data, $this->params)->get();
-        }
-        else{
-            $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} " . ($this->orderByColumn) . " LIMIT " . ($page - 1)*$cant . ", {$cant}";
-            $data = $this->query($sql)->get();
-        }
+        return $this->query->fetch_assoc();
+    }
+
+    public function all(){
+        return $this->query("SELECT * FROM {$this->table}")->get();
+    }
+
+    public function paginate($cant = 15){
+        
+        $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        
+        if(empty($this->query)){
+            
+            $sql = "SELECT SQL_CALC_FOUND_ROWS {$this->select} FROM {$this->table}";
+ 
+             if($this->where)
+                 $sql .= " WHERE {$this->where}";
+ 
+             if($this->orderByColumn)
+                 $sql .= " ORDER BY {$this->orderByColumn}";
+
+            $sql .= " LIMIT " . ($page - 1)*$cant . ", {$cant}";
+
+            $data = $this->query($sql, $this->values)->get();
+         }
 
         $total = $this->query("SELECT FOUND_ROWS() as total")->first()['total'];
 
@@ -113,32 +162,9 @@ class Model {
         ];   
     }
 
-    public function all(){
-        return $this->query("SELECT * FROM {$this->table}")->get();
-    }
-
     public function find($id){
         $sql = "SELECT * FROM {$this->table} WHERE id = ?";
         return $this->query($sql, [$id], 'i')->first();
-    }
-
-    public function where($column, $operator, $value = null){
-
-        if($value == null){
-            $value = $operator;
-            $operator = "=";
-        }
-
-        if(empty($this->sql)){
-            $this->sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$this->table} WHERE {$column} {$operator} ?";
-            $this->data[] = $value;
-        }
-        else{
-            $this->sql .= " AND {$column} {$operator} ?";
-            $this->data[] = $value;
-        }
-        
-        return $this;
     }
 
     public function create(array $data) {
@@ -176,14 +202,5 @@ class Model {
     public function delete($id){
         $sql = "DELETE FROM {$this->table} WHERE id = ?";
         $this->query($sql, [$id], 'i');
-    }
-
-    public function orderBy($column, $order = 'ASC'){
-        if(empty($this->orderByColumn))
-        	$this->orderByColumn = " ORDER BY {$column} {$order}";
-        else
-            $this->orderByColumn .= ", {$column} {$order}";
-
-        return $this;
     }
 }
